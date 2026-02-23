@@ -1,12 +1,26 @@
-# Supabase Watchdog — Vision Spec
+---
+type: spec
+domain: vision
+status: design
+version: 0.1.0
+parent: null
+tags:
+  - watchdog/vision
+  - watchdog/spec
+---
 
-**Version:** 0.1 (Draft)
-**Author:** Jannik / creoby
-**Date:** February 2026
+> [!nav] Navigation
+> **Domain Specs:** (none yet)
+
+# Supabase Watchdog — Vision Specification
+
+**Version:** 0.1.0
+**Last Updated:** 2026-02-23
+**Status:** Design
 
 ---
 
-## Problem
+## 1. Problem
 
 Supabase collects comprehensive error logs across all services — Edge Functions, Auth, Postgres, Storage, Realtime, and the API Gateway. These logs are visible in the Supabase Dashboard, but there's no way to receive alerts when errors occur without keeping the dashboard open.
 
@@ -14,7 +28,7 @@ Supabase's built-in solution, **Log Drains**, is only available on Team and Ente
 
 This is a widely requested feature with no existing open-source solution.
 
-## Vision
+## 2. Vision
 
 **Supabase Watchdog** is a lightweight, open-source error monitoring and alerting tool for Supabase projects. It gives developers the same visibility as the Supabase Dashboard error console — delivered to their phone via Telegram, Discord, or Slack.
 
@@ -30,7 +44,7 @@ One deployment monitors all your Supabase projects. No SDK integration, no per-p
 
 ---
 
-## How It Works
+## 3. How It Works
 
 Supabase exposes a **Management API** that provides programmatic access to the same logs visible in the Dashboard. The endpoint `GET /v1/projects/{ref}/analytics/endpoints/logs.all` accepts SQL queries and supports all log sources.
 
@@ -61,7 +75,7 @@ Watchdog polls this endpoint at a configurable interval (default: 5 minutes), fi
 
 ---
 
-## MVP Scope (v0.1)
+## 4. MVP Scope (v0.1)
 
 ### Features
 
@@ -132,7 +146,7 @@ channels:
 
 ---
 
-## Architecture
+## 5. Architecture
 
 ### Plugin-Based Design
 
@@ -221,7 +235,7 @@ interface Channel {
 
 ---
 
-## Deployment
+## 6. Deployment
 
 ### Option A: Deno Deploy (Recommended)
 
@@ -262,7 +276,7 @@ The project is a standard Deno application with no platform-specific dependencie
 
 ---
 
-## Roadmap
+## 7. Roadmap
 
 ### v0.2 — Additional Channels
 
@@ -344,7 +358,7 @@ Telegram: sends formatted answer
 
 ---
 
-## Technical Constraints & Considerations
+## 8. Technical Constraints & Considerations
 
 ### Management API Limitations
 
@@ -366,7 +380,7 @@ Telegram: sends formatted answer
 
 ---
 
-## Competitive Landscape
+## 9. Competitive Landscape
 
 | Solution | Works on Pro? | Catches all Supabase logs? | Real-time alerts? | Cost |
 |---|---|---|---|---|
@@ -379,7 +393,7 @@ The trade-off is clear: Watchdog doesn't provide sub-second alerting, but it's t
 
 ---
 
-## Success Criteria
+## 10. Success Criteria
 
 ### MVP Launch
 
@@ -397,12 +411,11 @@ The trade-off is clear: Watchdog doesn't provide sub-second alerting, but it's t
 
 ---
 
-## Open Questions
+## 11. Open Questions
 
-1. **Naming:** "Supabase Watchdog" is a working title. Alternatives: `supa-alert`, `supawatch`, `supamon`. Should the name reference Supabase directly, or be more generic to allow future expansion to other platforms?
-
-2. **Monorepo vs. separate packages:** Should channel plugins eventually be separate npm/deno packages, or keep everything in one repo for simplicity?
-
-3. **State persistence:** For deduplication and error history, should we use Deno KV (free on Deno Deploy), SQLite (for Docker), or keep it fully stateless in v0.1?
-
-4. **License:** MIT for maximum adoption? Or something more opinionated?
+| # | Question | Status | Resolution |
+|---|----------|--------|------------|
+| 1 | **Naming:** "Supabase Watchdog" is a working title. Alternatives: `supa-alert`, `supawatch`, `supamon`. Should the name reference Supabase directly, or be more generic to allow future expansion to other platforms? | Open | |
+| 2 | **Monorepo vs. separate packages:** Should channel plugins eventually be separate npm/deno packages, or keep everything in one repo for simplicity? | Open | |
+| 3 | **State persistence:** For deduplication and error history, should we use Deno KV (free on Deno Deploy), SQLite (for Docker), or keep it fully stateless in v0.1? | Open | |
+| 4 | **License:** MIT for maximum adoption? Or something more opinionated? | Open | |

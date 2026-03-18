@@ -17,99 +17,98 @@ interface LogRow {
 const ERROR_QUERIES: Record<string, string> = {
   edge_logs: `
     select
-      timestamp,
-      event_message,
-      metadata[0].response[0].status_code as status_code,
-      metadata[0].request[0].method as method,
-      metadata[0].request[0].path as path
-    from edge_logs
-    cross join unnest(metadata) as metadata
-    cross join unnest(metadata.response) as response
-    where response.status_code >= {{MIN_STATUS}}
-    order by timestamp desc
+      t.timestamp,
+      t.event_message,
+      r.status_code as status_code,
+      req.method as method,
+      req.path as path
+    from edge_logs t
+    cross join unnest(t.metadata) as m
+    cross join unnest(m.response) as r
+    cross join unnest(m.request) as req
+    where r.status_code >= {{MIN_STATUS}}
+    order by t.timestamp desc
     limit 200
   `,
 
   auth_logs: `
     select
-      timestamp,
-      event_message,
-      metadata[0].status as status_code,
-      metadata[0].path as path,
-      metadata[0].msg as msg
-    from auth_logs
-    cross join unnest(metadata) as metadata
-    where metadata.level in ('error', 'fatal')
-       or metadata.status >= {{MIN_STATUS}}
-    order by timestamp desc
+      t.timestamp,
+      t.event_message,
+      m.status as status_code,
+      m.path as path,
+      m.msg as msg,
+      m.level as level
+    from auth_logs t
+    cross join unnest(t.metadata) as m
+    where m.level in ('error', 'fatal', 'panic')
+       or safe_cast(m.status as int64) >= {{MIN_STATUS}}
+    order by t.timestamp desc
     limit 200
   `,
 
   postgres_logs: `
     select
-      timestamp,
-      event_message,
-      metadata[0].parsed[0].error_severity as error_severity,
-      metadata[0].parsed[0].sql_state_code as sql_state_code,
-      metadata[0].parsed[0].query as query,
-      metadata[0].parsed[0].user_name as user_name
-    from postgres_logs
-    cross join unnest(metadata) as metadata
-    cross join unnest(metadata.parsed) as parsed
-    where regexp_contains(parsed.error_severity, 'ERROR|FATAL|PANIC')
-    order by timestamp desc
+      t.timestamp,
+      t.event_message,
+      p.error_severity as error_severity,
+      p.sql_state_code as sql_state_code,
+      p.query as query,
+      p.user_name as user_name
+    from postgres_logs t
+    cross join unnest(t.metadata) as m
+    cross join unnest(m.parsed) as p
+    where regexp_contains(p.error_severity, 'ERROR|FATAL|PANIC')
+    order by t.timestamp desc
     limit 200
   `,
 
   storage_logs: `
     select
-      timestamp,
-      event_message,
-      metadata[0].statusCode as status_code,
-      metadata[0].error as error,
-      metadata[0].type as type
-    from storage_logs
-    cross join unnest(metadata) as metadata
-    where metadata.statusCode >= {{MIN_STATUS}}
-       or metadata.error is not null
-    order by timestamp desc
+      t.timestamp,
+      t.event_message,
+      r.statusCode as status_code,
+      m.level as level
+    from storage_logs t
+    cross join unnest(t.metadata) as m
+    cross join unnest(m.res) as r
+    where r.statusCode >= {{MIN_STATUS}}
+       or m.level in ('error', 'fatal')
+    order by t.timestamp desc
     limit 200
   `,
 
   realtime_logs: `
     select
-      timestamp,
-      event_message,
-      metadata[0].level as level
-    from realtime_logs
-    cross join unnest(metadata) as metadata
-    where metadata.level in ('error', 'fatal')
-    order by timestamp desc
+      t.timestamp,
+      t.event_message,
+      m.level as level
+    from realtime_logs t
+    cross join unnest(t.metadata) as m
+    where m.level in ('error', 'fatal')
+    order by t.timestamp desc
     limit 200
   `,
 
   postgrest_logs: `
     select
-      timestamp,
-      event_message,
-      metadata[0].response[0].status_code as status_code
-    from postgrest_logs
-    cross join unnest(metadata) as metadata
-    cross join unnest(metadata.response) as response
-    where response.status_code >= {{MIN_STATUS}}
-    order by timestamp desc
+      t.timestamp,
+      t.event_message
+    from postgrest_logs t
+    where regexp_contains(t.event_message, '(?i)error|fatal|panic')
+    order by t.timestamp desc
     limit 200
   `,
 
   supavisor_logs: `
     select
-      timestamp,
-      event_message,
-      metadata[0].level as level
-    from supavisor_logs
-    cross join unnest(metadata) as metadata
-    where metadata.level in ('error', 'fatal')
-    order by timestamp desc
+      t.timestamp,
+      t.event_message,
+      m.level as level
+    from supavisor_logs t
+    cross join unnest(t.metadata) as m
+    where m.level in ('error', 'fatal')
+    order by t.timestamp desc
     limit 200
   `,
 };

@@ -18,6 +18,8 @@ tags:
 > 5. [[mvp/phases/phase-5-bot-commands|Phase 5: Bot Commands]]
 > 6. [[mvp/phases/phase-6-deployment|Phase 6: Deployment & Docs]]
 > **Dependency graph:** 1 → 2 → 4, 1 → 3 → 4 → 5, 4 → 6
+> **Addendums:**
+> - [[mvp/addendums/error-context-enrichment|Error Context Enrichment]]
 
 # Watchdog — MVP: Implementation Plan
 

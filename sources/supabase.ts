@@ -54,7 +54,10 @@ const ERROR_QUERIES: Record<string, string> = {
       p.error_severity as error_severity,
       p.sql_state_code as sql_state_code,
       p.query as query,
-      p.user_name as user_name
+      p.user_name as user_name,
+      p.application_name as application_name,
+      p.detail as detail,
+      p.hint as hint
     from postgres_logs t
     cross join unnest(t.metadata) as m
     cross join unnest(m.parsed) as p

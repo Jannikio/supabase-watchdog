@@ -23,6 +23,71 @@ function escapeHtml(text: string): string {
     .replaceAll(">", "&gt;");
 }
 
+// --- Source-specific metadata rendering ---
+
+function metadataLine(
+  label: string,
+  value: unknown,
+  formatter?: (v: string) => string,
+): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  const str = String(value);
+  if (formatter) return `<b>${escapeHtml(label)}:</b> ${formatter(str)}`;
+  return `<b>${escapeHtml(label)}:</b> ${escapeHtml(str)}`;
+}
+
+const codeFmt = (v: string) => `<code>${escapeHtml(v)}</code>`;
+
+type MetadataRenderer = (m: Record<string, unknown>) => string[];
+
+const SOURCE_METADATA_RENDERERS: Record<string, MetadataRenderer> = {
+  edge_logs: (m) =>
+    [
+      metadataLine("Method", m.method),
+      metadataLine("Path", m.path, codeFmt),
+    ].filter((line): line is string => line !== null),
+
+  auth_logs: (m) =>
+    [
+      metadataLine("Path", m.path, codeFmt),
+      metadataLine("Level", m.level),
+    ].filter((line): line is string => line !== null),
+
+  postgres_logs: (m) =>
+    [
+      metadataLine("Severity", m.error_severity),
+      metadataLine("SQL State", m.sql_state_code, codeFmt),
+      metadataLine("User", m.user_name, codeFmt),
+      metadataLine("Application", m.application_name),
+      metadataLine("Detail", m.detail),
+      metadataLine("Hint", m.hint),
+      metadataLine("Query", m.query, codeFmt),
+    ].filter((line): line is string => line !== null),
+
+  storage_logs: (m) =>
+    [
+      metadataLine("Level", m.level),
+    ].filter((line): line is string => line !== null),
+
+  realtime_logs: (m) =>
+    [
+      metadataLine("Level", m.level),
+    ].filter((line): line is string => line !== null),
+
+  supavisor_logs: (m) =>
+    [
+      metadataLine("Level", m.level),
+    ].filter((line): line is string => line !== null),
+};
+
+const FALLBACK_METADATA_RENDERER: MetadataRenderer = (m) =>
+  Object.entries(m)
+    .filter(([_, v]) => v !== undefined && v !== null && v !== "")
+    .slice(0, 5)
+    .map(([key, value]) =>
+      `<b>${escapeHtml(key)}:</b> ${escapeHtml(String(value))}`
+    );
+
 // --- Telegram update types ---
 
 interface TelegramUpdate {
@@ -403,6 +468,17 @@ export class TelegramChannel implements Channel {
     // Severity (if set by processor)
     if (event.severity) {
       lines.push(`<b>Severity:</b> ${escapeHtml(event.severity)}`);
+    }
+
+    // Source-specific metadata context
+    if (event.metadata && Object.keys(event.metadata).length > 0) {
+      const renderer =
+        SOURCE_METADATA_RENDERERS[event.source] ?? FALLBACK_METADATA_RENDERER;
+      const metadataLines = renderer(event.metadata);
+      if (metadataLines.length > 0) {
+        lines.push("");
+        lines.push(...metadataLines);
+      }
     }
 
     // Error message — this can be long, so it goes last

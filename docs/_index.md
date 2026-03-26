@@ -24,6 +24,7 @@ tags:
 - [[mvp/phases/phase-4-orchestration|Phase 4: Orchestration]] — main.ts entry point, cron scheduling, deduplication, pipeline wiring
 - [[mvp/phases/phase-5-bot-commands|Phase 5: Bot Commands]] — /check, /errors, /status, Telegram getUpdates polling
 - [[mvp/phases/phase-6-deployment|Phase 6: Deployment & Docs]] — Dockerfile, README, .env.example, deploy task
+- [[mvp/addendums/error-context-enrichment|Addendum: Error Context Enrichment]] — Surface source-specific metadata (query, origin, severity) in alert messages
 
 ---
 

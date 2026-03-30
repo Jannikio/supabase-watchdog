@@ -6,7 +6,6 @@ import { runPollCycle, intervalToCron } from "./src/pipeline.ts";
 import { SupabaseSource } from "./src/sources/mod.ts";
 import { PassthroughProcessor } from "./src/processors/mod.ts";
 import { TelegramChannel } from "./src/channels/mod.ts";
-import { parseDuration } from "./src/config.ts";
 
 // ── Config ───────────────────────────────────────────────────────────
 
@@ -32,6 +31,14 @@ if (!result.configured) {
     telegram_mode: config.telegram_mode,
   });
 
+  // Warn if polling mode on Deno Deploy (doesn't work due to overlapping isolates)
+  const isDenoDeply = !!Deno.env.get("DENO_DEPLOYMENT_ID");
+  if (isDenoDeply && config.telegram_mode === "polling") {
+    log.warn("polling_on_deploy", {
+      error: "Polling mode is not supported on Deno Deploy. Telegram bot commands will not work reliably. Set WATCHDOG_TELEGRAM_MODE=webhook and WATCHDOG_BASE_URL to your deploy URL.",
+    });
+  }
+
   // Token validation
   try {
     const resp = await fetch("https://api.supabase.com/v1/projects", {
@@ -42,7 +49,6 @@ if (!result.configured) {
     } else {
       log.info("token_validated");
     }
-    // Consume body to prevent leak
     await resp.text();
   } catch (err) {
     log.warn("token_validation_error", { error: String(err) });
@@ -76,14 +82,34 @@ if (!result.configured) {
   if (config.telegram_mode === "webhook" && config.base_url) {
     await channel.setupWebhook(botDeps, config.base_url);
   } else {
-    // Delete any existing webhook before starting polling.
-    // If this bot was previously in webhook mode, Telegram won't
-    // return updates via getUpdates while a webhook is active.
     await channel.deleteWebhook();
     channel.startPolling(botDeps);
   }
 
-  // Start HTTP server
+  // ── Poll lock: prevents cron and initial poll from overlapping ──
+  let pollInFlight: Promise<void> | null = null;
+
+  function triggerPoll(): Promise<void> {
+    if (pollInFlight) {
+      log.info("poll_skipped", { reason: "previous poll still running" });
+      return pollInFlight;
+    }
+    const p = (async () => {
+      const r = await runPollCycle(source, processor, channel, state, lastPollTime, config);
+      lastPollTime = r.newLastPollTime;
+    })();
+    pollInFlight = p.finally(() => {
+      pollInFlight = null;
+    });
+    return pollInFlight;
+  }
+
+  // Register cron BEFORE starting HTTP server (Deno Deploy requirement)
+  const cronExpression = intervalToCron(config.polling.interval);
+  Deno.cron("watchdog-poll", cronExpression, () => triggerPoll());
+  log.info("cron_scheduled", { expression: cronExpression });
+
+  // Start HTTP server (Deno.serve)
   startServer({
     mode: "monitoring",
     state,
@@ -96,16 +122,6 @@ if (!result.configured) {
       : undefined,
   });
 
-  // Initial poll (run BEFORE scheduling cron to avoid race condition)
-  const initial = await runPollCycle(source, processor, channel, state, lastPollTime, config);
-  lastPollTime = initial.newLastPollTime;
-
-  // Schedule cron AFTER initial poll completes
-  const cronExpression = intervalToCron(config.polling.interval);
-  Deno.cron("watchdog-poll", cronExpression, async () => {
-    const result = await runPollCycle(source, processor, channel, state, lastPollTime, config);
-    lastPollTime = result.newLastPollTime;
-  });
-
-  log.info("cron_scheduled", { expression: cronExpression });
+  // Initial poll (uses same lock as cron — no overlap possible)
+  await triggerPoll();
 }

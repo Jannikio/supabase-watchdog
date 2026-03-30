@@ -1,8 +1,6 @@
 # Supabase Watchdog
 
-Lightweight error monitoring for Supabase projects. Polls the Supabase Management API for error-level events across all services and delivers alerts to Telegram. Includes a status dashboard and one-click deploy.
-
-Built for Pro-plan users who need alerting without a $599+/month Team plan.
+Free, open-source error monitoring for Supabase projects. Get Telegram alerts on your phone when something breaks across Edge Functions, Auth, Postgres, Storage, Realtime, or any other Supabase service. Includes a status dashboard and one-click deploy.
 
 [![Deploy on Deno](https://deno.com/button)](https://console.deno.com/new?clone=https://github.com/HumanMaschine/supabase-watchdog)
 

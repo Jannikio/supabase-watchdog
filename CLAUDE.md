@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Supabase Watchdog is an open-source error monitoring and alerting tool for Supabase projects. It polls the Supabase Management API for error logs across all services (Edge Functions, Auth, Postgres, Storage, Realtime, API Gateway, Supavisor) and sends alerts via Telegram (with Discord/Slack planned). Targets Pro-plan users who lack native alerting without $599+/month Team plans.
+Supabase Watchdog is a free, open-source error monitoring tool for Supabase projects. It polls the Supabase Management API for error logs across all services (Edge Functions, Auth, Postgres, Storage, Realtime, API Gateway, Supavisor) and sends alerts directly to Telegram (with Discord/Slack planned). Gives Supabase developers instant error notifications on their phone.
 
 **Status:** v0.2 — control plane with dashboard, Deno KV persistence, webhook support, and one-click Deno Deploy.
 

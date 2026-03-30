@@ -202,8 +202,28 @@ export class TelegramChannel implements Channel {
       }),
     });
 
-    const body = await response.text();
-    if (!response.ok) {
+    let body = await response.text();
+    if (response.status === 429) {
+      // Telegram rate-limited setWebhook (common during repeated redeployments)
+      try {
+        const err = JSON.parse(body);
+        const retryAfter = err?.parameters?.retry_after ?? 2;
+        log.warn("setWebhook_rate_limited", { retry_after: retryAfter });
+        await new Promise((r) => setTimeout(r, retryAfter * 1000 + 250));
+      } catch {
+        await new Promise((r) => setTimeout(r, 2000));
+      }
+
+      const retryResp = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: webhookUrl, secret_token: webhookSecret, allowed_updates: ["message"] }),
+      });
+      body = await retryResp.text();
+      if (!retryResp.ok) {
+        throw new Error(`setWebhook failed after retry (${retryResp.status}): ${body}`);
+      }
+    } else if (!response.ok) {
       throw new Error(`setWebhook failed (${response.status}): ${body}`);
     }
 

@@ -22,15 +22,16 @@ Free, open-source error monitoring for Supabase projects. Get Telegram alerts on
 
 1. Click the **Deploy on Deno** button above
 2. If prompted, connect your GitHub account and grant Deno Deploy access to your repositories
-3. The app starts and shows a setup page at your deploy URL
-4. Add environment variables in the Deno Deploy dashboard:
+3. In your project settings, go to **KV** and create a database (required for dashboard data and dedup)
+4. The app starts and shows a setup page at your deploy URL
+5. Add environment variables in the Deno Deploy dashboard:
    - `SUPABASE_ACCESS_TOKEN` — [get it here](https://supabase.com/dashboard/account/tokens)
    - `TELEGRAM_BOT_TOKEN` — [create via @BotFather](https://t.me/BotFather)
    - `TELEGRAM_CHAT_ID` — [find via @userinfobot](https://t.me/userinfobot)
    - `WATCHDOG_PROJECTS` — format: `ref:name,ref:name` (find your ref in the Supabase dashboard URL)
    - `WATCHDOG_TELEGRAM_MODE` — set to `webhook`
    - `WATCHDOG_BASE_URL` — your deploy URL (e.g. `https://your-app.deno.dev`)
-5. The app restarts automatically and begins monitoring
+6. The app restarts automatically and begins monitoring
 
 ## Quick Start — Docker / Local
 
